@@ -28,15 +28,23 @@ const PurchasePage = () => {
           quantity: yup.number().when(
             "checked",
             (a, b, value) => {
-              // console.log({ value });
               if (value?.parent?.checked) {
-                return yup
-                  .number()
-                  .min(0)
-                  .typeError(() => "Quantity must be valid number")
-                  .required(() => "Quantity is required");
-              } else {
-                return yup.number().notRequired();
+                if (
+                  value?.from &&
+                  value?.from[1]?.value?.lotProducts?.length > 0
+                ) {
+                  value.from[1].value.lotProducts.map((item) => {
+                    if (item.checked) {
+                      return yup.number().notRequired();
+                    }
+                  });
+                } else {
+                  return yup
+                    .number()
+                    .min(0)
+                    .typeError(() => "Quantity must be valid number")
+                    .required(() => "Quantity is required");
+                }
               }
             },
             [["checked", "checked"]]
@@ -44,15 +52,23 @@ const PurchasePage = () => {
           price: yup.number().when(
             "checked",
             (a, b, value) => {
-              // console.log({ value });
               if (value?.parent?.checked) {
-                return yup
-                  .number()
-                  .min(0)
-                  .typeError(() => "Price must be valid number")
-                  .required(() => "Price is required");
-              } else {
-                return yup.number().notRequired();
+                if (
+                  value?.from &&
+                  value?.from[1]?.value?.lotProducts?.length > 0
+                ) {
+                  value.from[1].value.lotProducts.map((item) => {
+                    if (item.checked) {
+                      return yup.number().notRequired();
+                    }
+                  });
+                } else {
+                  return yup
+                    .number()
+                    .min(0)
+                    .typeError(() => "Price must be valid number")
+                    .required(() => "Price is required");
+                }
               }
             },
             [["checked", "checked"]]
@@ -68,32 +84,40 @@ const PurchasePage = () => {
       ),
     lotProducts: yup.array().of(
       yup.object().shape({
+        checked: yup.boolean(),
         units: yup.array().of(
           yup.object().shape({
-            checked: yup.boolean(),
             quantity: yup.number().when("checked", (a, b, value) => {
               console.log({ value });
-              // if (value?.parent?.checked) {
-              //   return yup
-              //     .number()
-              //     .min(0)
-              //     .typeError(() => "Quantity must be valid number")
-              //     .required(() => "Quantity is required");
-              // } else {
-              //   return yup.number().notRequired();
-              // }
+
+              if (value.from && value?.from[2].value.lotProducts?.length > 0) {
+                value.from[2].value.lotProducts.map((item) => {
+                  if (item.checked) {
+                    return yup
+                      .number()
+                      .min(0)
+                      .typeError(() => "Quantity must be valid number")
+                      .required(() => "Quantity is required");
+                  } else {
+                    return yup.number().notRequired();
+                  }
+                });
+              }
             }),
             price: yup.number().when("checked", (a, b, value) => {
-              console.log({ value });
-              // if (value?.parent?.checked) {
-              //   return yup
-              //     .number()
-              //     .min(0)
-              //     .typeError(() => "Price must be valid number")
-              //     .required(() => "Price is required");
-              // } else {
-              //   return yup.number().notRequired();
-              // }
+              value.from &&
+                value?.from[2].value.lotProducts?.length > 0 &&
+                value?.from[2].value.lotProducts.map((item) => {
+                  if (item.checked) {
+                    return yup
+                      .number()
+                      .min(0)
+                      .typeError(() => "Price must be valid number")
+                      .required(() => "Price is required");
+                  } else {
+                    return yup.number().notRequired();
+                  }
+                });
             }),
           })
         ),
