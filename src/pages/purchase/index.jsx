@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { unitDropdown } from "./utils/dropdownData";
 import { FaRegEdit } from "react-icons/fa";
 import * as yup from "yup";
@@ -8,122 +8,39 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import LotManageModal from "./LotManageModal";
 
 const purchaseDefaultValue = {
-  productName: "fufheofje",
-  units: [],
-  discount: 0,
-  tax: 0,
-  lotProducts: [],
+  productName: "Rice 100 mg",
+  discount: 100,
+  tax: 100,
+  subTotal: 100,
+  quantity: [
+    {
+      id: "6639b84f5b8e534fa8da6d40",
+      price: "45",
+      qty: "2",
+    },
+    {
+      id: "6639b84f5b8e534fa8da6d40",
+      price: "1000",
+      qty: "4",
+    },
+  ],
+  lot: {
+    lotId1: {
+      unitId1: 1,
+      unitId2: 2,
+    },
+    lotId2: {
+      unitId1: 5,
+      unitId2: 3,
+    },
+  },
+  selectedUnits: ["6639b84f5b8e534fa8da6d40", "6639b8485b8e534fa8da6d3c"],
 };
 
 const PurchasePage = () => {
   const [modal, setModal] = useState(false);
 
-  const schemaResolver = yup.object().shape({
-    productName: yup.string().required("This field is required"),
-    units: yup
-      .array()
-      .of(
-        yup.object().shape({
-          checked: yup.boolean(),
-          quantity: yup.number().when(
-            "checked",
-            (a, b, value) => {
-              if (value?.parent?.checked) {
-                if (
-                  value?.from &&
-                  value?.from[1]?.value?.lotProducts?.length > 0
-                ) {
-                  value.from[1].value.lotProducts.map((item) => {
-                    if (item.checked) {
-                      return yup.number().notRequired();
-                    }
-                  });
-                } else {
-                  return yup
-                    .number()
-                    .min(0)
-                    .typeError(() => "Quantity must be valid number")
-                    .required(() => "Quantity is required");
-                }
-              }
-            },
-            [["checked", "checked"]]
-          ),
-          price: yup.number().when(
-            "checked",
-            (a, b, value) => {
-              if (value?.parent?.checked) {
-                if (
-                  value?.from &&
-                  value?.from[1]?.value?.lotProducts?.length > 0
-                ) {
-                  value.from[1].value.lotProducts.map((item) => {
-                    if (item.checked) {
-                      return yup.number().notRequired();
-                    }
-                  });
-                } else {
-                  return yup
-                    .number()
-                    .min(0)
-                    .typeError(() => "Price must be valid number")
-                    .required(() => "Price is required");
-                }
-              }
-            },
-            [["checked", "checked"]]
-          ),
-        })
-      )
-      .test(
-        "at-least-one-selected",
-        "You must select at least one unit",
-        function (units) {
-          return units.some((unit) => unit.checked);
-        }
-      ),
-    lotProducts: yup.array().of(
-      yup.object().shape({
-        checked: yup.boolean(),
-        units: yup.array().of(
-          yup.object().shape({
-            quantity: yup.number().when("checked", (a, b, value) => {
-              console.log({ value });
-
-              if (value.from && value?.from[2].value.lotProducts?.length > 0) {
-                value.from[2].value.lotProducts.map((item) => {
-                  if (item.checked) {
-                    return yup
-                      .number()
-                      .min(0)
-                      .typeError(() => "Quantity must be valid number")
-                      .required(() => "Quantity is required");
-                  } else {
-                    return yup.number().notRequired();
-                  }
-                });
-              }
-            }),
-            price: yup.number().when("checked", (a, b, value) => {
-              value.from &&
-                value?.from[2].value.lotProducts?.length > 0 &&
-                value?.from[2].value.lotProducts.map((item) => {
-                  if (item.checked) {
-                    return yup
-                      .number()
-                      .min(0)
-                      .typeError(() => "Price must be valid number")
-                      .required(() => "Price is required");
-                  } else {
-                    return yup.number().notRequired();
-                  }
-                });
-            }),
-          })
-        ),
-      })
-    ),
-  });
+  const schemaResolver = yup.object().shape({});
 
   const methods = useForm({
     defaultValues: purchaseDefaultValue,
@@ -135,42 +52,19 @@ const PurchasePage = () => {
     watch,
     control,
     formState: { errors },
-    setValue,
   } = methods;
 
   const toggle = () => {
     setModal(!modal);
   };
 
-  const handleUnitSelect = (target, unit, index) => {
-    const currentUnits = watch("units");
-
-    if (target) {
-      // When checked, add or update the unit
-      const updatedUnits = currentUnits.some(
-        (item) => item.value === unit.value
-      )
-        ? currentUnits.map((item) =>
-            item.value === unit.value ? { ...item, checked: true, index } : item
-          )
-        : [...currentUnits, { ...unit, checked: true, index }];
-
-      setValue("units", updatedUnits);
-    } else {
-      // When unchecked, remove the unit or set checked to false
-      const updatedUnits = currentUnits.map((item) =>
-        item.value === unit.value ? { ...item, checked: false, index } : item
-      );
-
-      setValue("units", updatedUnits);
-    }
-  };
+  const handleUnitSelect = (target, unit, index) => {};
 
   const onSubmit = () => {
     console.log(watch());
   };
 
-  console.log({ errors, watch: watch() });
+  const selectedUnits = watch("selectedUnits");
 
   return (
     <FormProvider {...methods}>
@@ -210,7 +104,7 @@ const PurchasePage = () => {
                   <div key={unit.value}>
                     <Controller
                       control={control}
-                      {...register(`units`)}
+                      {...register(`selectedUnits[${index}]`)}
                       render={({ field }) => (
                         <>
                           <input
@@ -218,9 +112,9 @@ const PurchasePage = () => {
                             id={unit.value}
                             type="checkbox"
                             className="form-check-input"
-                            value={unit.value}
+                            checked={field.value || false}
                             onChange={(e) =>
-                              handleUnitSelect(e.target.checked, unit, index)
+                              field.onChange(e.target.checked ? unit.value : "")
                             }
                           />
                           <label
@@ -269,58 +163,55 @@ const PurchasePage = () => {
                 <FaRegEdit className="text-primary" onClick={toggle} />
               </td>
             </tr>
-            {watch("units")?.map(
-              (unit, index) =>
-                unit.checked && (
-                  <tr key={unit.value}>
-                    <td colSpan={3}></td>
-                    <td>
-                      <div className="d-flex gap-1 align-items-baseline">
-                        <p>Qty</p>
-                        <Controller
-                          name={`units[${index}].quantity`}
-                          control={control}
-                          render={({ field }) => (
-                            <input
-                              {...field}
-                              className="form-control"
-                              label="Quantity"
-                              type="number"
-                            />
-                          )}
+            {watch("quantity")?.map((unit, index) => (
+              <tr key={unit.value}>
+                <td colSpan={3}></td>
+                <td>
+                  <div className="d-flex gap-1 align-items-baseline">
+                    <p>Qty</p>
+                    <Controller
+                      name={`quantity[${index}].qty`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          className="form-control"
+                          label="Quantity"
+                          type="number"
                         />
-                      </div>
-                      {errors?.units && errors?.units[index]?.quantity && (
-                        <p className="text-danger">
-                          {errors?.units[index].quantity.message}
-                        </p>
                       )}
-                    </td>
-                    <td colSpan={2}>
-                      <div className="d-flex gap-1 align-items-baseline">
-                        <p>Price</p>
-                        <Controller
-                          name={`units[${index}].price`}
-                          control={control}
-                          render={({ field }) => (
-                            <input
-                              {...field}
-                              className="form-control"
-                              label="Price"
-                              type="number"
-                            />
-                          )}
+                    />
+                  </div>
+                  {errors?.quantity && errors?.quantity[index]?.qty && (
+                    <p className="text-danger">
+                      {errors?.quantity[index].qty.message}
+                    </p>
+                  )}
+                </td>
+                <td colSpan={2}>
+                  <div className="d-flex gap-1 align-items-baseline">
+                    <p>Price</p>
+                    <Controller
+                      name={`quantity[${index}].price`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          className="form-control"
+                          label="Price"
+                          type="number"
                         />
-                      </div>
-                      {errors?.units && errors?.units[index]?.price && (
-                        <p className="text-danger">
-                          {errors?.units[index].price.message}
-                        </p>
                       )}
-                    </td>
-                  </tr>
-                )
-            )}
+                    />
+                  </div>
+                  {errors?.quantity && errors?.quantity[index]?.price && (
+                    <p className="text-danger">
+                      {errors?.quantity[index].price.message}
+                    </p>
+                  )}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </Table>
         <div className="text-center">
@@ -334,6 +225,7 @@ const PurchasePage = () => {
         setModal={setModal}
         toggle={toggle}
         units={watch("units")}
+        data={watch()}
       />
     </FormProvider>
   );

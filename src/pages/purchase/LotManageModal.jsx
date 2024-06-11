@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Modal, Table } from "react-bootstrap";
 import { lotDropdown, unitDropdown } from "./utils/dropdownData";
 import { Controller, useFormContext } from "react-hook-form";
 
-const LotManageModal = ({ modal, setModal, toggle, units }) => {
+const LotManageModal = ({ modal, setModal, toggle, units, data }) => {
+  const [hasError, setHasError] = useState();
   const methods = useFormContext();
 
   const {
@@ -11,6 +12,8 @@ const LotManageModal = ({ modal, setModal, toggle, units }) => {
     control,
     formState: { errors },
     setValue,
+    setError,
+    clearErrors,
     watch,
   } = methods;
 
@@ -35,7 +38,43 @@ const LotManageModal = ({ modal, setModal, toggle, units }) => {
     }
   };
 
-  // console.log(watch("lotProducts"));
+  const handleLotManage = () => {
+    data?.lotProducts.map((item) => {
+      console.log({ item });
+      if (item.checked) {
+        item.units.map((unit, i) => {
+          if (!unit.quantity) {
+            setError(`lotProducts[${item.index}].units[${i}].quantity`, {
+              type: "custom",
+              message: "Quantity is required",
+            });
+          } else {
+            clearErrors(`lotProducts[${item.index}].units[${i}].quantity`);
+          }
+        });
+      } else {
+        item.units.map((unit, i) => {
+          clearErrors(`lotProducts[${item.index}].units[${i}].quantity`);
+        });
+      }
+    });
+
+    // if (errors?.lotProducts) {
+    //   setModal(false);
+    // } else if (!errors?.lotProducts) {
+    //   setModal(true);
+    // }
+
+    setModal(false);
+  };
+
+  // useEffect(() => {
+  //   if (errors?.lotProducts?.length < 0) {
+  //     setModal(false);
+  //   } else {
+  //     setModal(true);
+  //   }
+  // }, [errors]);
 
   return (
     <Modal
@@ -169,7 +208,7 @@ const LotManageModal = ({ modal, setModal, toggle, units }) => {
         </form>
 
         <div className="mt-5 text-end">
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" onClick={handleLotManage}>
             Submit
           </Button>
         </div>
