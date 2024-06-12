@@ -5,7 +5,6 @@ import {
   FormProvider,
   useFieldArray,
   useForm,
-  useWatch,
 } from "react-hook-form";
 import { unitDropdown } from "./utils/dropdownData";
 import { FaRegEdit } from "react-icons/fa";
@@ -18,58 +17,43 @@ const purchaseDefaultValue = {
   discount: 100,
   tax: 100,
   subTotal: 100,
-  selectedUnits: [
-    {
-      checked: true,
-      unit: "6639b84f5b8e534fa8da6d40",
-      purchasePrice: 10,
-      salePrice: 10,
-      quantity: 10,
-    },
-    {
-      checked: true,
-      unit: "6639b8485b8e534fa8da6d3c",
-      purchasePrice: 20,
-      salePrice: 20,
-      quantity: 20,
-    },
-  ],
-  selectedLots: [
-    {
-      checked: true,
-      lot: "66654b55694aa4acb0a935c3",
-      units: [
-        {
-          qty: "1",
-          price: "1",
-        },
-        {
-          qty: "-1",
-          price: "-1",
-        },
-      ],
-    },
-    {
-      checked: true,
-      lot: "666430c1b4cf3984f60df24f",
-      units: [
-        {
-          qty: "2",
-          price: "2",
-        },
-        {
-          qty: "4",
-          price: "4",
-        },
-      ],
-    },
-  ],
+  selectedUnits: [],
+  selectedLots: [],
 };
 
 const PurchasePage = () => {
   const [modal, setModal] = useState(false);
 
-  const schemaResolver = yup.object().shape({});
+  const schemaResolver = yup.object().shape({
+    productName: yup.string().required(),
+    discount: yup.number().required(),
+    tax: yup.number().required(),
+    subTotal: yup.number().required(),
+    selectedUnits: yup
+      .array()
+      .of(
+        yup.object().shape({
+          checked: yup.boolean().required(),
+          unit: yup.string().required(),
+          purchasePrice: yup.number().required(),
+          quantity: yup.number().min(1).required(),
+        })
+      )
+      .min(1),
+
+    selectedLots: yup.array().of(
+      yup.object().shape({
+        checked: yup.boolean().required(),
+        lot: yup.string().required(),
+        units: yup.array().of(
+          yup.object().shape({
+            qty: yup.string().required(),
+            price: yup.string().required(),
+          })
+        ),
+      })
+    ),
+  });
 
   const methods = useForm({
     defaultValues: purchaseDefaultValue,
@@ -88,6 +72,7 @@ const PurchasePage = () => {
   };
 
   let watchSelectedUnits = watch("selectedUnits");
+  let watchSelectedLots = watch("selectedLots");
   const { append, remove } = useFieldArray({ name: "selectedUnits", control });
 
   const handleSelectedUnit = (e, unit) => {
@@ -117,22 +102,9 @@ const PurchasePage = () => {
     }
   };
 
-  console.log(watch());
+  console.log(errors, watch());
 
-  const onSubmit = (formData) => {
-    // formData.lot = [];
-    // if (formData?.selectedLots?.length > 0) {
-    //   Object.keys(formData.lotProducts).map((lot) => {
-    //     const matchedLot = formData?.selectedLots?.some(
-    //       (selected) => selected === lot
-    //     );
-    //     if (matchedLot) {
-    //       formData?.lot?.push(formData.lotProducts[lot]);
-    //     }
-    //   });
-    // }
-    // console.log({ formData });
-  };
+  const onSubmit = (formData) => {};
 
   return (
     <FormProvider {...methods}>
@@ -192,8 +164,8 @@ const PurchasePage = () => {
                   );
                 })}
 
-                {errors.units && (
-                  <p className="text-danger">{errors.units.message}</p>
+                {errors.selectedUnits && (
+                  <p className="text-danger">{errors.selectedUnits.message}</p>
                 )}
               </td>
               <td>
@@ -226,80 +198,86 @@ const PurchasePage = () => {
                 <FaRegEdit className="text-primary" onClick={toggle} />
               </td>
             </tr>
-            {}
-            {watchSelectedUnits?.map((unit, index) => {
-              const findUnit = unitDropdown.find(
-                (item) => unit.unit === item?.value
-              );
-              if (findUnit) {
-                return (
-                  <tr key={unit.id}>
-                    <td colSpan={3} className="text-end pt-3">
-                      {unit.name}
-                    </td>
-                    <td>
-                      <div className="d-flex gap-1 align-items-baseline">
-                        <p>Qty</p>
-                        <Controller
-                          name={`selectedUnits[${index}].quantity`}
-                          control={control}
-                          render={({ field }) => (
-                            <input
-                              {...field}
-                              className="form-control"
-                              label="Quantity"
-                              type="number"
-                            />
-                          )}
-                        />
-                      </div>
-                      {errors?.quantity && errors?.quantity[index]?.qty && (
-                        <p className="text-danger">
-                          {errors?.quantity[index].qty.message}
-                        </p>
-                      )}
-                    </td>
-                    <td colSpan={2}>
-                      <div className="d-flex gap-1 align-items-baseline">
-                        <p>Price</p>
-                        <Controller
-                          name={`selectedUnits[${index}].purchasePrice`}
-                          control={control}
-                          render={({ field }) => (
-                            <input
-                              {...field}
-                              className="form-control"
-                              label="Price"
-                              type="number"
-                            />
-                          )}
-                        />
-                      </div>
-                      {errors?.quantity && errors?.quantity[index]?.price && (
-                        <p className="text-danger">
-                          {errors?.quantity[index].price.message}
-                        </p>
-                      )}
-                    </td>
-                  </tr>
+
+            {!watchSelectedLots?.length &&
+              watchSelectedUnits?.map((unit, index) => {
+                const findUnit = unitDropdown.find(
+                  (item) => unit.unit === item?.value
                 );
-              }
-            })}
+                if (findUnit) {
+                  return (
+                    <tr key={unit.id}>
+                      <td colSpan={3} className="text-end pt-3">
+                        {unit.name}
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1 align-items-baseline">
+                          <p>Qty</p>
+                          <Controller
+                            name={`selectedUnits[${index}].quantity`}
+                            control={control}
+                            render={({ field }) => (
+                              <input
+                                {...field}
+                                className="form-control"
+                                label="Quantity"
+                                type="number"
+                              />
+                            )}
+                          />
+                        </div>
+                        {errors?.selectedUnits &&
+                          errors?.selectedUnits[index]?.quantity && (
+                            <p className="text-danger">
+                              {errors?.selectedUnits[index].quantity.message}
+                            </p>
+                          )}
+                      </td>
+                      <td colSpan={2}>
+                        <div className="d-flex gap-1 align-items-baseline">
+                          <p>Price</p>
+                          <Controller
+                            name={`selectedUnits[${index}].purchasePrice`}
+                            control={control}
+                            render={({ field }) => (
+                              <input
+                                {...field}
+                                className="form-control"
+                                label="Price"
+                                type="number"
+                              />
+                            )}
+                          />
+                        </div>
+                        {errors?.selectedUnits &&
+                          errors?.selectedUnits[index]?.purchasePrice && (
+                            <p className="text-danger">
+                              {
+                                errors?.selectedUnits[index].purchasePrice
+                                  .message
+                              }
+                            </p>
+                          )}
+                      </td>
+                    </tr>
+                  );
+                }
+              })}
           </tbody>
         </Table>
+        <LotManageModal
+          modal={modal}
+          setModal={setModal}
+          toggle={toggle}
+          quantity={watch("quantity")}
+          data={watch()}
+        />
         <div className="text-center">
           <Button className="" type="submit">
             Submit
           </Button>
         </div>
       </Form>
-      <LotManageModal
-        modal={modal}
-        setModal={setModal}
-        toggle={toggle}
-        quantity={watch("quantity")}
-        data={watch()}
-      />
     </FormProvider>
   );
 };

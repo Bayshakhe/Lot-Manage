@@ -58,7 +58,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
         <Modal.Title>Manage Lot</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <form id="lotManage" noValidate className="w-100">
+        <div id="lotManage" noValidate className="w-100">
           {lotDropdown?.map((lot, lotIndex) => {
             const isChecked = watchSelectedLots?.some(
               (lotItem) => lotItem.lot === lot?.value
@@ -139,6 +139,17 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                                   />
                                 )}
                               />
+                              {errors.selectedLots?.[lotIndex]?.units?.[
+                                unitIndex
+                              ]?.qty && (
+                                <p className="text-danger">
+                                  {
+                                    errors.selectedLots?.[lotIndex]?.units?.[
+                                      unitIndex
+                                    ]?.qty.message
+                                  }
+                                </p>
+                              )}
                             </td>
                             <td>
                               <Controller
@@ -164,7 +175,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
               </Table>
             );
           })}
-        </form>
+        </div>
 
         <div className="mt-5 text-end">
           <Button type="submit" variant="primary">
