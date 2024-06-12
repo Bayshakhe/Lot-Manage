@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";
-import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  FormProvider,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { unitDropdown } from "./utils/dropdownData";
 import { FaRegEdit } from "react-icons/fa";
 import * as yup from "yup";
@@ -12,22 +18,52 @@ const purchaseDefaultValue = {
   discount: 100,
   tax: 100,
   subTotal: 100,
-  quantity: [
+  selectedUnits: [
     {
-      id: "6639b84f5b8e534fa8da6d40",
-      name: "Gram",
-      price: "45",
-      qty: "2",
+      checked: true,
+      unit: "6639b84f5b8e534fa8da6d40",
+      purchasePrice: 10,
+      salePrice: 10,
+      quantity: 10,
     },
     {
-      id: "6639b8485b8e534fa8da6d3c",
-      name: "KG",
-      price: "1000",
-      qty: "4",
+      checked: true,
+      unit: "6639b8485b8e534fa8da6d3c",
+      purchasePrice: 20,
+      salePrice: 20,
+      quantity: 20,
     },
   ],
-  selectedUnits: ["6639b84f5b8e534fa8da6d40", "6639b8485b8e534fa8da6d3c"],
-  selectedLots: [],
+  selectedLots: [
+    {
+      checked: true,
+      lot: "66654b55694aa4acb0a935c3",
+      units: [
+        {
+          qty: "1",
+          price: "1",
+        },
+        {
+          qty: "-1",
+          price: "-1",
+        },
+      ],
+    },
+    {
+      checked: true,
+      lot: "666430c1b4cf3984f60df24f",
+      units: [
+        {
+          qty: "2",
+          price: "2",
+        },
+        {
+          qty: "4",
+          price: "4",
+        },
+      ],
+    },
+  ],
 };
 
 const PurchasePage = () => {
@@ -50,6 +86,38 @@ const PurchasePage = () => {
   const toggle = () => {
     setModal(!modal);
   };
+
+  let watchSelectedUnits = watch("selectedUnits");
+  const { append, remove } = useFieldArray({ name: "selectedUnits", control });
+
+  const handleSelectedUnit = (e, unit) => {
+    if (e.target.checked) {
+      const alreadyChecked = watchSelectedUnits.findIndex(
+        (unit) => unit.unit === unit?.value
+      );
+
+      if (alreadyChecked === -1) {
+        append({
+          checked: true,
+          unit: unit.value,
+          purchasePrice: 0,
+          salePrice: 0,
+          quantity: 0,
+        });
+      }
+    } else {
+      const findIndex = watchSelectedUnits.findIndex(
+        (item) => item.unit === unit.value
+      );
+
+      if (findIndex !== -1) {
+        // If found, remove the unit from openingStocksFields
+        remove(findIndex);
+      }
+    }
+  };
+
+  console.log(watch());
 
   const onSubmit = (formData) => {
     // formData.lot = [];
@@ -100,34 +168,29 @@ const PurchasePage = () => {
                 )}
               </td>
               <td>
-                {unitDropdown.map((unit, index) => (
-                  <div key={unit.value}>
-                    <Controller
-                      control={control}
-                      {...register(`selectedUnits[${index}]`)}
-                      render={({ field }) => (
-                        <>
-                          <input
-                            {...field}
-                            id={unit.value}
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={field.value || false}
-                            onChange={(e) =>
-                              field.onChange(e.target.checked ? unit.value : "")
-                            }
-                          />
-                          <label
-                            className="form-check-label ms-2"
-                            htmlFor={unit.value}
-                          >
-                            {unit.label}
-                          </label>
-                        </>
-                      )}
-                    />
-                  </div>
-                ))}
+                {unitDropdown.map((unit) => {
+                  const isChecked = watchSelectedUnits?.some(
+                    (itemUnit) => itemUnit.unit === unit?.value
+                  );
+
+                  return (
+                    <div key={unit.value}>
+                      <input
+                        id={unit.value}
+                        type="checkbox"
+                        className="form-check-input"
+                        checked={isChecked}
+                        onChange={(e) => handleSelectedUnit(e, unit)}
+                      />
+                      <label
+                        className="form-check-label ms-2"
+                        htmlFor={unit.value}
+                      >
+                        {unit.label}
+                      </label>
+                    </div>
+                  );
+                })}
 
                 {errors.units && (
                   <p className="text-danger">{errors.units.message}</p>
@@ -164,11 +227,11 @@ const PurchasePage = () => {
               </td>
             </tr>
             {}
-            {watch("quantity")?.map((unit, index) => {
-              const matchedUnit = watch("selectedUnits")?.some(
-                (selected) => selected === unit.id
+            {watchSelectedUnits?.map((unit, index) => {
+              const findUnit = unitDropdown.find(
+                (item) => unit.unit === item?.value
               );
-              if (matchedUnit) {
+              if (findUnit) {
                 return (
                   <tr key={unit.id}>
                     <td colSpan={3} className="text-end pt-3">
@@ -178,7 +241,7 @@ const PurchasePage = () => {
                       <div className="d-flex gap-1 align-items-baseline">
                         <p>Qty</p>
                         <Controller
-                          name={`quantity[${index}].qty`}
+                          name={`selectedUnits[${index}].quantity`}
                           control={control}
                           render={({ field }) => (
                             <input
@@ -200,7 +263,7 @@ const PurchasePage = () => {
                       <div className="d-flex gap-1 align-items-baseline">
                         <p>Price</p>
                         <Controller
-                          name={`quantity[${index}].price`}
+                          name={`selectedUnits[${index}].purchasePrice`}
                           control={control}
                           render={({ field }) => (
                             <input
