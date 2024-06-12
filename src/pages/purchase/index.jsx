@@ -15,26 +15,19 @@ const purchaseDefaultValue = {
   quantity: [
     {
       id: "6639b84f5b8e534fa8da6d40",
+      name: "Gram",
       price: "45",
       qty: "2",
     },
     {
-      id: "6639b84f5b8e534fa8da6d40",
+      id: "6639b8485b8e534fa8da6d3c",
+      name: "KG",
       price: "1000",
       qty: "4",
     },
   ],
-  lot: {
-    lotId1: {
-      unitId1: 1,
-      unitId2: 2,
-    },
-    lotId2: {
-      unitId1: 5,
-      unitId2: 3,
-    },
-  },
   selectedUnits: ["6639b84f5b8e534fa8da6d40", "6639b8485b8e534fa8da6d3c"],
+  selectedLots: [],
 };
 
 const PurchasePage = () => {
@@ -58,13 +51,20 @@ const PurchasePage = () => {
     setModal(!modal);
   };
 
-  const handleUnitSelect = (target, unit, index) => {};
-
-  const onSubmit = () => {
-    console.log(watch());
+  const onSubmit = (formData) => {
+    // formData.lot = [];
+    // if (formData?.selectedLots?.length > 0) {
+    //   Object.keys(formData.lotProducts).map((lot) => {
+    //     const matchedLot = formData?.selectedLots?.some(
+    //       (selected) => selected === lot
+    //     );
+    //     if (matchedLot) {
+    //       formData?.lot?.push(formData.lotProducts[lot]);
+    //     }
+    //   });
+    // }
+    // console.log({ formData });
   };
-
-  const selectedUnits = watch("selectedUnits");
 
   return (
     <FormProvider {...methods}>
@@ -163,55 +163,65 @@ const PurchasePage = () => {
                 <FaRegEdit className="text-primary" onClick={toggle} />
               </td>
             </tr>
-            {watch("quantity")?.map((unit, index) => (
-              <tr key={unit.value}>
-                <td colSpan={3}></td>
-                <td>
-                  <div className="d-flex gap-1 align-items-baseline">
-                    <p>Qty</p>
-                    <Controller
-                      name={`quantity[${index}].qty`}
-                      control={control}
-                      render={({ field }) => (
-                        <input
-                          {...field}
-                          className="form-control"
-                          label="Quantity"
-                          type="number"
+            {}
+            {watch("quantity")?.map((unit, index) => {
+              const matchedUnit = watch("selectedUnits")?.some(
+                (selected) => selected === unit.id
+              );
+              if (matchedUnit) {
+                return (
+                  <tr key={unit.id}>
+                    <td colSpan={3} className="text-end pt-3">
+                      {unit.name}
+                    </td>
+                    <td>
+                      <div className="d-flex gap-1 align-items-baseline">
+                        <p>Qty</p>
+                        <Controller
+                          name={`quantity[${index}].qty`}
+                          control={control}
+                          render={({ field }) => (
+                            <input
+                              {...field}
+                              className="form-control"
+                              label="Quantity"
+                              type="number"
+                            />
+                          )}
                         />
+                      </div>
+                      {errors?.quantity && errors?.quantity[index]?.qty && (
+                        <p className="text-danger">
+                          {errors?.quantity[index].qty.message}
+                        </p>
                       )}
-                    />
-                  </div>
-                  {errors?.quantity && errors?.quantity[index]?.qty && (
-                    <p className="text-danger">
-                      {errors?.quantity[index].qty.message}
-                    </p>
-                  )}
-                </td>
-                <td colSpan={2}>
-                  <div className="d-flex gap-1 align-items-baseline">
-                    <p>Price</p>
-                    <Controller
-                      name={`quantity[${index}].price`}
-                      control={control}
-                      render={({ field }) => (
-                        <input
-                          {...field}
-                          className="form-control"
-                          label="Price"
-                          type="number"
+                    </td>
+                    <td colSpan={2}>
+                      <div className="d-flex gap-1 align-items-baseline">
+                        <p>Price</p>
+                        <Controller
+                          name={`quantity[${index}].price`}
+                          control={control}
+                          render={({ field }) => (
+                            <input
+                              {...field}
+                              className="form-control"
+                              label="Price"
+                              type="number"
+                            />
+                          )}
                         />
+                      </div>
+                      {errors?.quantity && errors?.quantity[index]?.price && (
+                        <p className="text-danger">
+                          {errors?.quantity[index].price.message}
+                        </p>
                       )}
-                    />
-                  </div>
-                  {errors?.quantity && errors?.quantity[index]?.price && (
-                    <p className="text-danger">
-                      {errors?.quantity[index].price.message}
-                    </p>
-                  )}
-                </td>
-              </tr>
-            ))}
+                    </td>
+                  </tr>
+                );
+              }
+            })}
           </tbody>
         </Table>
         <div className="text-center">
@@ -224,7 +234,7 @@ const PurchasePage = () => {
         modal={modal}
         setModal={setModal}
         toggle={toggle}
-        units={watch("units")}
+        quantity={watch("quantity")}
         data={watch()}
       />
     </FormProvider>

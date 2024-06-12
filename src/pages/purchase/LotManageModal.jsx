@@ -3,7 +3,7 @@ import { Button, Modal, Table } from "react-bootstrap";
 import { lotDropdown, unitDropdown } from "./utils/dropdownData";
 import { Controller, useFormContext } from "react-hook-form";
 
-const LotManageModal = ({ modal, setModal, toggle, units, data }) => {
+const LotManageModal = ({ modal, setModal, toggle, quantity, data }) => {
   const [hasError, setHasError] = useState();
   const methods = useFormContext();
 
@@ -40,7 +40,6 @@ const LotManageModal = ({ modal, setModal, toggle, units, data }) => {
 
   const handleLotManage = () => {
     data?.lotProducts.map((item) => {
-      console.log({ item });
       if (item.checked) {
         item.units.map((unit, i) => {
           if (!unit.quantity) {
@@ -98,12 +97,16 @@ const LotManageModal = ({ modal, setModal, toggle, units, data }) => {
             >
               <thead className="table-light">
                 <tr>
-                  <th className="text-center" style={{ maxWidth: "180px" }}>
+                  <th
+                    colSpan={3}
+                    className="text-center bg-dark text-white"
+                    style={{ maxWidth: "180px" }}
+                  >
                     <div className="d-flex justify-content-center align-items-center">
                       <Controller
                         control={control}
-                        name={`lotProducts[${index}].checked`}
-                        render={(field) => (
+                        name={`selectedLots[${index}]`}
+                        render={({ field }) => (
                           <>
                             <input
                               {...field}
@@ -111,11 +114,11 @@ const LotManageModal = ({ modal, setModal, toggle, units, data }) => {
                               type="checkbox"
                               className="form-check-input"
                               value={item.value}
-                              defaultChecked={watch(
-                                `lotProducts[${index}].checked`
-                              )}
+                              defaultChecked={watch(`selectedLots[${index}]`)}
                               onChange={(e) =>
-                                handleLotSelect(e.target.checked, item, index)
+                                field.onChange(
+                                  e.target.checked ? item.value : ""
+                                )
                               }
                             />
                             <label
@@ -135,80 +138,91 @@ const LotManageModal = ({ modal, setModal, toggle, units, data }) => {
                 </tr>
               </thead>
               <tbody>
-                <Table className="align-middle" size="sm">
-                  <thead className="text-dark">
-                    <tr>
-                      <th className="text-center">Unit</th>
-                      <th className="text-center">Quantity</th>
-                      <th className="text-center">Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {units?.map(
-                      (unit, unitInx) =>
-                        unit.checked && (
-                          <tr key={unit?.value}>
-                            <td style={{ minWidth: "90px" }}>{unit?.label}</td>
-                            <td>
-                              <Controller
-                                name={`lotProducts[${index}].units[${unitInx}].quantity`}
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    className="form-control"
-                                    label="Quantity"
-                                    style={{ maxWidth: "180px" }}
-                                  />
-                                )}
-                              />
-                              {errors?.lotProducts?.[index]?.units?.[unitInx]
-                                ?.quantity && (
-                                <p className="text-danger">
-                                  {
-                                    errors?.lotProducts[index].units[unitInx]
-                                      .quantity.message
-                                  }
-                                </p>
+                {quantity?.map((unit, index) => {
+                  const matchedUnit = data?.selectedUnits?.some(
+                    (selected) => selected === unit.id
+                  );
+                  if (matchedUnit) {
+                    return (
+                      <React.Fragment key={unit.id}>
+                        <tr>
+                          <th className="text-center fw-normal bg-light">
+                            Unit
+                          </th>
+                          <th className="text-center fw-normal bg-light">
+                            Quantity
+                          </th>
+                          <th className="text-center fw-normal bg-light">
+                            Price
+                          </th>
+                        </tr>
+                        <tr key={unit?.id}>
+                          <td
+                            style={{ minWidth: "90px" }}
+                            className="text-center fw-bold"
+                          >
+                            {unit?.name}
+                          </td>
+                          <td>
+                            <Controller
+                              name={`lotProducts[${item.value}][${unit.id}].qty`}
+                              control={control}
+                              render={({ field }) => (
+                                <input
+                                  {...field}
+                                  type="number"
+                                  className="form-control"
+                                  label="Quantity"
+                                  style={{ maxWidth: "180px" }}
+                                />
                               )}
-                            </td>
-                            <td>
-                              <Controller
-                                name={`lotProducts[${index}].units[${unitInx}].price`}
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    className="form-control"
-                                    label="Price"
-                                    style={{ maxWidth: "180px" }}
-                                  />
-                                )}
-                              />
-                              {errors?.lotProducts?.[index]?.units?.[unitInx]
-                                ?.price && (
-                                <p className="text-danger">
-                                  {
-                                    errors?.lotProducts[index].units[unitInx]
-                                      .price.message
-                                  }
-                                </p>
+                            />
+                            {/* {errors?.lotProducts?.[index]?.units?.[unitInx]
+                              ?.quantity && (
+                              <p className="text-danger">
+                                {
+                                  errors?.lotProducts[index].units[unitInx]
+                                    .quantity.message
+                                }
+                              </p>
+                            )} */}
+                          </td>
+                          <td>
+                            <Controller
+                              name={`lotProducts[${item.value}][${unit.id}].price`}
+                              control={control}
+                              render={({ field }) => (
+                                <input
+                                  {...field}
+                                  type="number"
+                                  className="form-control"
+                                  label="Price"
+                                  style={{ maxWidth: "180px" }}
+                                />
                               )}
-                            </td>
-                          </tr>
-                        )
-                    )}
-                  </tbody>
-                </Table>
+                            />
+                            {/* {errors?.lotProducts?.[index]?.units?.[unitInx]
+                              ?.price && (
+                              <p className="text-danger">
+                                {
+                                  errors?.lotProducts[index].units[unitInx]
+                                    .price.message
+                                }
+                              </p>
+                            )} */}
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    );
+                  }
+                })}
               </tbody>
             </Table>
           ))}
         </form>
 
         <div className="mt-5 text-end">
-          <Button type="submit" variant="primary" onClick={handleLotManage}>
+          <Button type="submit" variant="primary">
             Submit
           </Button>
         </div>
