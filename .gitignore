@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+src/pages/purchase/trash.jsx
+
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Form, Table } from "react-bootstrap";
 import {
   Controller,
@@ -15,11 +15,7 @@ import { productDropdown } from "./utils/productData";
 
 const purchaseDefaultValue = {
   productName: "",
-  discount: 100,
-  tax: 100,
-  subTotal: 100,
   selectedProduct: [],
-  selectedUnits: [],
   selectedLots: [],
 };
 
@@ -37,22 +33,19 @@ const PurchasePage = () => {
     register,
     watch,
     control,
+    setValue,
     formState: { errors },
   } = methods;
 
   const toggle = () => {
     setModal(!modal);
   };
-  let watchSelectedProduct = watch("selectedProduct");
+
+  const watchSelectedLots = watch("selectedLots", []);
+
+  const watchSelectedProduct = watch("selectedProduct", []);
   const { append: productAppend, remove: productRemove } = useFieldArray({
     name: "selectedProduct",
-    control,
-  });
-
-  let watchSelectedUnits = watch("selectedUnits");
-  let watchSelectedLots = watch("selectedLots");
-  const { append: unitAppend, remove: unitRemove } = useFieldArray({
-    name: "selectedUnits",
     control,
   });
 
@@ -60,58 +53,46 @@ const PurchasePage = () => {
     const findProduct = product?.find(
       (productItem) => productItem.value === value
     );
+    if (findProduct) {
+      const units = unitDropdown
+        .filter((unitItem) =>
+          Object.keys(findProduct.purchasePrice).some(
+            (unit) => unit === unitItem.value
+          )
+        )
+        .map((unit) => ({
+          value: unit.value,
+          label: unit.label,
+          purchasePrice: findProduct.purchasePrice[unit.value],
+        }));
 
-    productAppend(findProduct);
-  };
-
-  const handleSelectedUnit = (e, unit) => {
-    if (e.target.checked) {
-      const alreadyChecked = watchSelectedUnits.findIndex(
-        (unit) => unit.unit === unit?.value
-      );
-
-      if (alreadyChecked === -1) {
-        unitAppend({
-          checked: true,
-          unit: unit.value,
-          purchasePrice: 0,
-          salePrice: 0,
-          quantity: 0,
-        });
-      }
-    } else {
-      const findIndex = watchSelectedUnits.findIndex(
-        (item) => item.unit === unit.value
-      );
-
-      if (findIndex !== -1) {
-        // If found, remove the unit from openingStocksFields
-        unitRemove(findIndex);
-      }
+      productAppend({ ...findProduct, units });
     }
   };
 
-  console.log(errors, watch());
+  console.log(watch());
 
-  const onSubmit = (formData) => {};
+  const onSubmit = (formData) => {
+    console.log("Form Data Submitted: ", formData);
+  };
 
   return (
     <FormProvider {...methods}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <select
-            {...register("selectedProduct")}
+            // {...register("productList")}
             className="form-select w-25 mx-auto mt-5"
             placeholder="Select product"
             onChange={(e) =>
               handleSelectedProduct(e.target.value, productDropdown)
             }
           >
-            {watchSelectedProduct?.length > 0
+            {watchSelectedProduct.length > 0
               ? productDropdown
                   .filter(
                     (perProduct) =>
-                      !watchSelectedProduct?.some(
+                      !watchSelectedProduct.some(
                         (selectedProduct) =>
                           selectedProduct.value === perProduct.value
                       )
@@ -148,19 +129,18 @@ const PurchasePage = () => {
               <th>Action</th>
             </tr>
           </thead>
-          {watchSelectedProduct?.length > 0 &&
-            watchSelectedProduct?.map((selectedProduct) => (
-              <>
-                {console.log({ selectedProduct })}
-                <tbody>
+          <tbody>
+            {watchSelectedProduct?.length > 0 &&
+              watchSelectedProduct.map((selectedProduct, productIndex) => (
+                <React.Fragment key={productIndex}>
                   <tr>
                     <td>
                       <input
-                        {...register("productName")}
+                        // {...register(`selectedProduct[${productIndex}].value`)}
                         type="text"
-                        label={selectedProduct.label}
                         className="form-control"
                         value={selectedProduct.label}
+                        // onChange={() => {}}
                         disabled
                       />
                       {errors?.productName && (
@@ -170,42 +150,39 @@ const PurchasePage = () => {
                       )}
                     </td>
                     <td>
-                      {unitDropdown.map((unit) => {
-                        const isChecked = watchSelectedUnits?.some(
-                          (itemUnit) => itemUnit.unit === unit?.value
-                        );
-
+                      {selectedProduct?.units?.map((unit, unitIndex) => {
                         return (
-                          <div key={unit.value}>
+                          <div key={`${selectedProduct.value}-${unit.value}`}>
                             <input
-                              id={unit.value}
+                              id={`selectedProduct[${productIndex}].units[${unitIndex}]`}
                               type="checkbox"
                               className="form-check-input"
-                              checked={isChecked}
-                              onChange={(e) => handleSelectedUnit(e, unit)}
+                              checked={unit.checked || false}
+                              onChange={(e) =>
+                                setValue(
+                                  `selectedProduct[${productIndex}].units[${unitIndex}].checked`,
+                                  e.target.checked
+                                )
+                              }
                             />
                             <label
                               className="form-check-label ms-2"
-                              htmlFor={unit.value}
+                              htmlFor={`selectedProduct[${productIndex}].units[${unitIndex}]`}
                             >
                               {unit.label}
                             </label>
                           </div>
                         );
                       })}
-
-                      {errors.selectedUnits && (
-                        <p className="text-danger">
-                          {errors.selectedUnits.message}
-                        </p>
-                      )}
                     </td>
                     <td>
                       <input
                         type="number"
                         className="form-control"
                         placeholder="Discount"
-                        {...register("discount")}
+                        {...register(
+                          `selectedProduct[${productIndex}].discount`
+                        )}
                       />
                     </td>
                     <td>
@@ -213,7 +190,7 @@ const PurchasePage = () => {
                         type="number"
                         className="form-control"
                         placeholder="Tax"
-                        {...register("tax")}
+                        {...register(`selectedProduct[${productIndex}].tax`)}
                       />
                     </td>
                     <td>
@@ -223,30 +200,33 @@ const PurchasePage = () => {
                         placeholder="Sub Total"
                         disabled
                         value={0}
-                        {...register("subTotal")}
+                        {...register(
+                          `selectedProduct[${productIndex}].subTotal`
+                        )}
                       />
                     </td>
                     <td className="text-center">
-                      <FaRegEdit className="text-primary" onClick={toggle} />
+                      <FaRegEdit
+                        key={productIndex}
+                        className="text-primary"
+                        onClick={toggle}
+                      />
                     </td>
                   </tr>
 
                   {!watchSelectedLots?.length &&
-                    watchSelectedUnits?.map((unit, index) => {
-                      const findUnit = unitDropdown.find(
-                        (item) => unit.unit === item?.value
-                      );
-                      if (findUnit) {
-                        return (
+                    selectedProduct?.units.map(
+                      (unit, unitIndex) =>
+                        unit?.checked && (
                           <tr key={unit.id}>
                             <td colSpan={3} className="text-end pt-3">
-                              {unit.name}
+                              {unit.label}
                             </td>
                             <td>
                               <div className="d-flex gap-1 align-items-baseline">
                                 <p>Qty</p>
                                 <Controller
-                                  name={`selectedUnits[${index}].quantity`}
+                                  name={`selectedProduct[${productIndex}].units[${unitIndex}].quantity`}
                                   control={control}
                                   render={({ field }) => (
                                     <input
@@ -259,10 +239,10 @@ const PurchasePage = () => {
                                 />
                               </div>
                               {errors?.selectedUnits &&
-                                errors?.selectedUnits[index]?.quantity && (
+                                errors?.selectedUnits[unitIndex]?.quantity && (
                                   <p className="text-danger">
                                     {
-                                      errors?.selectedUnits[index].quantity
+                                      errors?.selectedUnits[unitIndex].quantity
                                         .message
                                     }
                                   </p>
@@ -272,7 +252,7 @@ const PurchasePage = () => {
                               <div className="d-flex gap-1 align-items-baseline">
                                 <p>Price</p>
                                 <Controller
-                                  name={`selectedUnits[${index}].purchasePrice`}
+                                  name={`selectedProduct[${productIndex}].units[${unitIndex}].purchasePrice`}
                                   control={control}
                                   render={({ field }) => (
                                     <input
@@ -285,22 +265,22 @@ const PurchasePage = () => {
                                 />
                               </div>
                               {errors?.selectedUnits &&
-                                errors?.selectedUnits[index]?.purchasePrice && (
+                                errors?.selectedUnits[unitIndex]
+                                  ?.purchasePrice && (
                                   <p className="text-danger">
                                     {
-                                      errors?.selectedUnits[index].purchasePrice
-                                        .message
+                                      errors?.selectedUnits[unitIndex]
+                                        .purchasePrice.message
                                     }
                                   </p>
                                 )}
                             </td>
                           </tr>
-                        );
-                      }
-                    })}
-                </tbody>
-              </>
-            ))}
+                        )
+                    )}
+                </React.Fragment>
+              ))}
+          </tbody>
         </Table>
 
         <LotManageModal
@@ -312,7 +292,7 @@ const PurchasePage = () => {
         />
 
         <div className="text-center">
-          {watchSelectedProduct?.length > 0 && (
+          {watchSelectedProduct.length > 0 && (
             <Button className="" type="submit">
               Submit
             </Button>
