@@ -8,12 +8,8 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
   const methods = useFormContext();
 
   const {
-    register,
     control,
     formState: { errors },
-    setValue,
-    setError,
-    clearErrors,
     watch,
   } = methods;
 
