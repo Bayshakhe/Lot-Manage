@@ -12,6 +12,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
     control,
     formState: { errors },
     watch,
+    setValue,
   } = methods;
 
   const watchSelectedProduct = watch("selectedProduct", []);
@@ -19,9 +20,11 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
   let watchSelectedLots = watch("selectedLots");
   const { append, remove } = useFieldArray({ name: "selectedLots", control });
 
-  const lotDropdown = lotData.filter((lot) => lot.product === modal.value);
+  const lotDropdown = lotData.filter(
+    (lot) => lot.product === modal?.selectedProduct?.value
+  );
 
-  const handleSelectedLot = (e, lot) => {
+  const handleSelectedLot = (e, lotIndex, lot) => {
     if (e.target.checked) {
       const alreadyChecked = watchSelectedLots.findIndex(
         (lotItem) => lotItem.lot === lot?.value
@@ -31,7 +34,10 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
         append({
           checked: true,
           lot: lot.value,
+          units: modal?.selectedProduct?.units,
         });
+      } else {
+        return;
       }
     } else {
       const findIndex = watchSelectedLots.findIndex(
@@ -43,6 +49,11 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
         remove(findIndex);
       }
     }
+
+    setValue(
+      `selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}]`,
+      watchSelectedLots
+    );
   };
 
   console.log(watch());
@@ -86,7 +97,9 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                             type="checkbox"
                             className="form-check-input"
                             checked={isChecked}
-                            onChange={(e) => handleSelectedLot(e, lot)}
+                            onChange={(e) =>
+                              handleSelectedLot(e, lotIndex, lot)
+                            }
                           />
                           <label
                             className="form-check-label ms-2"
@@ -99,9 +112,9 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                     </th>
                   </tr>
                 </thead>
-                {console.log({ lot })}
+
                 <tbody>
-                  {modal.units?.map((unit, unitIndex) => {
+                  {modal?.selectedProduct.units?.map((unit, unitIndex) => {
                     if (unit.checked) {
                       return (
                         <React.Fragment key={unit.value}>
@@ -125,7 +138,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                             </td>
                             <td>
                               <Controller
-                                name={`selectedLots[${lotIndex}].units[${unitIndex}].qty`}
+                                name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].units[${unitIndex}].quantity`}
                                 control={control}
                                 render={({ field }) => (
                                   <input
@@ -139,19 +152,19 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                               />
                               {errors.selectedLots?.[lotIndex]?.units?.[
                                 unitIndex
-                              ]?.qty && (
+                              ]?.quantity && (
                                 <p className="text-danger">
                                   {
                                     errors.selectedLots?.[lotIndex]?.units?.[
                                       unitIndex
-                                    ]?.qty.message
+                                    ]?.quantity.message
                                   }
                                 </p>
                               )}
                             </td>
                             <td>
                               <Controller
-                                name={`selectedLots[${lotIndex}].units[${unitIndex}].price`}
+                                name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].units[${unitIndex}].purchasePrice`}
                                 control={control}
                                 render={({ field }) => (
                                   <input

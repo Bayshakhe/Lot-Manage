@@ -203,15 +203,16 @@ const PurchasePage = () => {
                       />
                     </td>
                     <td className="text-center">
-                      {selectedProduct.units.map(
-                        (unit) =>
-                          unit.checked && (
-                            <FaRegEdit
-                              key={productIndex}
-                              className="text-primary"
-                              onClick={() => setModal(selectedProduct)}
-                            />
-                          )
+                      {selectedProduct.units.find(
+                        (unit) => unit.checked === true
+                      ) && (
+                        <FaRegEdit
+                          key={productIndex}
+                          className="text-primary"
+                          onClick={() =>
+                            setModal({ selectedProduct, productIndex })
+                          }
+                        />
                       )}
                     </td>
                   </tr>
