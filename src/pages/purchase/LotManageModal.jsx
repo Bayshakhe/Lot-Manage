@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Button, Modal, Table } from "react-bootstrap";
-import { lotDropdown, unitDropdown } from "./utils/dropdownData";
+import { unitDropdown } from "./utils/dropdownData";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import { lotData } from "./utils/lotData";
 
 const LotManageModal = ({ modal, setModal, toggle }) => {
   const [hasError, setHasError] = useState();
@@ -13,10 +14,12 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
     watch,
   } = methods;
 
-  let watchSelectedUnits = watch("selectedUnits");
+  const watchSelectedProduct = watch("selectedProduct", []);
 
   let watchSelectedLots = watch("selectedLots");
   const { append, remove } = useFieldArray({ name: "selectedLots", control });
+
+  const lotDropdown = lotData.filter((lot) => lot.product === modal.value);
 
   const handleSelectedLot = (e, lot) => {
     if (e.target.checked) {
@@ -41,6 +44,8 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
       }
     }
   };
+
+  console.log(watch());
 
   return (
     <Modal
@@ -94,13 +99,10 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                     </th>
                   </tr>
                 </thead>
+                {console.log({ lot })}
                 <tbody>
-                  {watchSelectedUnits?.map((unit, unitIndex) => {
-                    const matchedUnit = unitDropdown.find(
-                      (unitItem) => unit.unit === unitItem?.value
-                    );
-
-                    if (matchedUnit && isChecked) {
+                  {modal.units?.map((unit, unitIndex) => {
+                    if (unit.checked) {
                       return (
                         <React.Fragment key={unit.value}>
                           <tr>
@@ -119,7 +121,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                               style={{ minWidth: "90px" }}
                               className="text-center fw-bold"
                             >
-                              {unit?.name}
+                              {unit?.label}
                             </td>
                             <td>
                               <Controller

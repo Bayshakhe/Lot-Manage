@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Form, Table } from "react-bootstrap";
 import {
   Controller,
@@ -14,7 +14,6 @@ import LotManageModal from "./LotManageModal";
 import { productDropdown } from "./utils/productData";
 
 const purchaseDefaultValue = {
-  productName: "",
   selectedProduct: [],
   selectedLots: [],
 };
@@ -70,11 +69,11 @@ const PurchasePage = () => {
     }
   };
 
-  console.log(watch());
-
   const onSubmit = (formData) => {
     console.log("Form Data Submitted: ", formData);
   };
+
+  // console.log(watch());
 
   return (
     <FormProvider {...methods}>
@@ -136,11 +135,9 @@ const PurchasePage = () => {
                   <tr>
                     <td>
                       <input
-                        // {...register(`selectedProduct[${productIndex}].value`)}
                         type="text"
                         className="form-control"
                         value={selectedProduct.label}
-                        // onChange={() => {}}
                         disabled
                       />
                       {errors?.productName && (
@@ -206,11 +203,16 @@ const PurchasePage = () => {
                       />
                     </td>
                     <td className="text-center">
-                      <FaRegEdit
-                        key={productIndex}
-                        className="text-primary"
-                        onClick={toggle}
-                      />
+                      {selectedProduct.units.map(
+                        (unit) =>
+                          unit.checked && (
+                            <FaRegEdit
+                              key={productIndex}
+                              className="text-primary"
+                              onClick={() => setModal(selectedProduct)}
+                            />
+                          )
+                      )}
                     </td>
                   </tr>
 
