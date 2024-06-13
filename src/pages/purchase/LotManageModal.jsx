@@ -56,7 +56,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
     );
   };
 
-  console.log(watch());
+  // console.log(watch());
 
   return (
     <Modal
@@ -114,71 +114,62 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                 </thead>
 
                 <tbody>
+                  <tr>
+                    <th className="text-center fw-normal bg-light">Unit</th>
+                    <th className="text-center fw-normal bg-light">Quantity</th>
+                    <th className="text-center fw-normal bg-light">Price</th>
+                  </tr>
                   {modal?.selectedProduct.units?.map((unit, unitIndex) => {
                     if (unit.checked) {
                       return (
-                        <React.Fragment key={unit.value}>
-                          <tr>
-                            <th className="text-center fw-normal bg-light">
-                              Unit
-                            </th>
-                            <th className="text-center fw-normal bg-light">
-                              Quantity
-                            </th>
-                            <th className="text-center fw-normal bg-light">
-                              Price
-                            </th>
-                          </tr>
-                          <tr key={unit?.value}>
-                            <td
-                              style={{ minWidth: "90px" }}
-                              className="text-center fw-bold"
-                            >
-                              {unit?.label}
-                            </td>
-                            <td>
-                              <Controller
-                                name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].units[${unitIndex}].quantity`}
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    className="form-control"
-                                    label="Quantity"
-                                    style={{ maxWidth: "180px" }}
-                                  />
-                                )}
-                              />
-                              {errors.selectedLots?.[lotIndex]?.units?.[
-                                unitIndex
-                              ]?.quantity && (
-                                <p className="text-danger">
-                                  {
-                                    errors.selectedLots?.[lotIndex]?.units?.[
-                                      unitIndex
-                                    ]?.quantity.message
-                                  }
-                                </p>
+                        <tr key={unit?.value}>
+                          <td
+                            style={{ minWidth: "90px" }}
+                            className="text-center fw-bold"
+                          >
+                            {unit?.label}
+                          </td>
+                          <td>
+                            <Controller
+                              name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].units[${unitIndex}].quantity`}
+                              control={control}
+                              render={({ field }) => (
+                                <input
+                                  {...field}
+                                  type="number"
+                                  className="form-control"
+                                  label="Quantity"
+                                  style={{ maxWidth: "180px" }}
+                                />
                               )}
-                            </td>
-                            <td>
-                              <Controller
-                                name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].units[${unitIndex}].purchasePrice`}
-                                control={control}
-                                render={({ field }) => (
-                                  <input
-                                    {...field}
-                                    type="number"
-                                    className="form-control"
-                                    label="Price"
-                                    style={{ maxWidth: "180px" }}
-                                  />
-                                )}
-                              />
-                            </td>
-                          </tr>
-                        </React.Fragment>
+                            />
+                            {errors.selectedLots?.[lotIndex]?.units?.[unitIndex]
+                              ?.quantity && (
+                              <p className="text-danger">
+                                {
+                                  errors.selectedLots?.[lotIndex]?.units?.[
+                                    unitIndex
+                                  ]?.quantity.message
+                                }
+                              </p>
+                            )}
+                          </td>
+                          <td>
+                            <Controller
+                              name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].units[${unitIndex}].purchasePrice`}
+                              control={control}
+                              render={({ field }) => (
+                                <input
+                                  {...field}
+                                  type="number"
+                                  className="form-control"
+                                  label="Price"
+                                  style={{ maxWidth: "180px" }}
+                                />
+                              )}
+                            />
+                          </td>
+                        </tr>
                       );
                     }
                   })}

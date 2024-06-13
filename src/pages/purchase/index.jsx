@@ -21,7 +21,29 @@ const purchaseDefaultValue = {
 const PurchasePage = () => {
   const [modal, setModal] = useState(false);
 
-  const schemaResolver = yup.object().shape({});
+  const schemaResolver = yup.object().shape({
+    selectedProduct: yup.array().of(
+      yup.object().shape({
+        // quantity: yup.number().when("checked", {
+        //   is: true,
+        //   then: (schema) =>
+        //     schema
+        //       .required("Quantity is required.")
+        //       .min(1, "Quantity must be at least 1."),
+        //   otherwise: (schema) => schema.notRequired(),
+        // }),
+        quantity: yup.number().when("checked", (a, b, value) => {
+          console.log({ value });
+          const findChecked = value?.parent?.units.find(
+            (unit) => unit?.checked === true
+          );
+          if (!findChecked) {
+            return yup.object().shape({}).required("must be selected one unit");
+          }
+        }),
+      })
+    ),
+  });
 
   const methods = useForm({
     defaultValues: purchaseDefaultValue,
@@ -48,6 +70,12 @@ const PurchasePage = () => {
     control,
   });
 
+  // const watchSelectedUnits = watch(`selectedProduct.selectedUnits`, []);
+  // const { append: unitAppend, remove: unitRemove } = useFieldArray({
+  //   name: `selectedProduct.selectedUnits`,
+  //   control,
+  // });
+
   const handleSelectedProduct = (value, product) => {
     const findProduct = product?.find(
       (productItem) => productItem.value === value
@@ -69,11 +97,29 @@ const PurchasePage = () => {
     }
   };
 
+  const handleUnitSelected = (e, unit, productIndex) => {
+    // if (e.target.checked) {
+    //   const alreadyExist = watchSelectedUnits?.some(
+    //     (selectedUnit) => selectedUnit === unit.value
+    //   );
+    //   if (!alreadyExist) {
+    //     setValue(`selectedProduct[${productIndex}].selectedUnits`, [...unit.value]);
+    //   }
+    // } else {
+    //   const findIndex = watchSelectedUnits?.findIndex(
+    //     (selectedUnit) => selectedUnit === unit.value
+    //   );
+    //   if (findIndex !== -1) {
+    //     setValue(`selectedProduct[${productIndex}].selectedUnits`, [...unit.value])
+    //   }
+    // }
+  };
+
   const onSubmit = (formData) => {
     console.log("Form Data Submitted: ", formData);
   };
 
-  // console.log(watch());
+  console.log(errors, watch());
 
   return (
     <FormProvider {...methods}>
@@ -150,17 +196,25 @@ const PurchasePage = () => {
                       {selectedProduct?.units?.map((unit, unitIndex) => {
                         return (
                           <div key={`${selectedProduct.value}-${unit.value}`}>
-                            <input
-                              id={`selectedProduct[${productIndex}].units[${unitIndex}]`}
-                              type="checkbox"
-                              className="form-check-input"
-                              checked={unit.checked || false}
-                              onChange={(e) =>
-                                setValue(
-                                  `selectedProduct[${productIndex}].units[${unitIndex}].checked`,
-                                  e.target.checked
-                                )
-                              }
+                            <Controller
+                              control={control}
+                              name={`selectedProduct[${productIndex}].selectedUnits`}
+                              render={({ field }) => (
+                                <input
+                                  id={`selectedProduct[${productIndex}].units[${unitIndex}]`}
+                                  {...field}
+                                  type="checkbox"
+                                  className="form-check-input"
+                                  checked={unit.checked || false}
+                                  onChange={(e) => {
+                                    handleUnitSelected(e, unit, productIndex);
+                                    setValue(
+                                      `selectedProduct[${productIndex}].units[${unitIndex}].checked`,
+                                      e.target.checked
+                                    );
+                                  }}
+                                />
+                              )}
                             />
                             <label
                               className="form-check-label ms-2"
@@ -241,12 +295,14 @@ const PurchasePage = () => {
                                   )}
                                 />
                               </div>
-                              {errors?.selectedUnits &&
-                                errors?.selectedUnits[unitIndex]?.quantity && (
+                              {errors?.selectedProduct &&
+                                errors?.selectedProduct[productIndex]?.units[
+                                  unitIndex
+                                ]?.quantity && (
                                   <p className="text-danger">
                                     {
-                                      errors?.selectedUnits[unitIndex].quantity
-                                        .message
+                                      errors.selectedProduct[productIndex]
+                                        .units[unitIndex].quantity.message
                                     }
                                   </p>
                                 )}
