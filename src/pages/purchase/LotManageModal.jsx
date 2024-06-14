@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Modal, Table } from "react-bootstrap";
-import { unitDropdown } from "./utils/dropdownData";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { lotData } from "./utils/lotData";
 
 const LotManageModal = ({ modal, setModal, toggle }) => {
@@ -11,52 +10,12 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
   const {
     control,
     formState: { errors },
-    watch,
     setValue,
   } = methods;
-
-  const watchSelectedProduct = watch("selectedProduct", []);
-
-  let watchSelectedLots = watch("selectedLots");
-  const { append, remove } = useFieldArray({ name: "selectedLots", control });
 
   const lotDropdown = lotData.filter(
     (lot) => lot.product === modal?.selectedProduct?.value
   );
-
-  const handleSelectedLot = (e, lotIndex, lot) => {
-    if (e.target.checked) {
-      const alreadyChecked = watchSelectedLots.findIndex(
-        (lotItem) => lotItem.lot === lot?.value
-      );
-
-      if (alreadyChecked === -1) {
-        append({
-          checked: true,
-          lot: lot.value,
-          units: modal?.selectedProduct?.units,
-        });
-      } else {
-        return;
-      }
-    } else {
-      const findIndex = watchSelectedLots.findIndex(
-        (lotItem) => lotItem.lot === lot.value
-      );
-
-      if (findIndex !== -1) {
-        // If found, remove the unit from openingStocksFields
-        remove(findIndex);
-      }
-    }
-
-    setValue(
-      `selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}]`,
-      watchSelectedLots
-    );
-  };
-
-  // console.log(watch());
 
   return (
     <Modal
@@ -72,10 +31,6 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
       <Modal.Body>
         <div id="lotManage" noValidate className="w-100">
           {lotDropdown?.map((lot, lotIndex) => {
-            const isChecked = watchSelectedLots?.some(
-              (lotItem) => lotItem.lot === lot?.value
-            );
-
             return (
               <Table
                 className="align-middle"
@@ -92,14 +47,28 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                     >
                       <div className="d-flex justify-content-center align-items-center">
                         <div>
+                          <Controller
+                            name={`selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].lot`}
+                            control={control}
+                            defaultValue={lot.value}
+                            render={({ field }) => (
+                              <input
+                                {...field}
+                                type="text"
+                                className="form-control d-none"
+                              />
+                            )}
+                          />
                           <input
                             id={lot.value}
                             type="checkbox"
                             className="form-check-input"
-                            checked={isChecked}
-                            onChange={(e) =>
-                              handleSelectedLot(e, lotIndex, lot)
-                            }
+                            onChange={(e) => {
+                              setValue(
+                                `selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].checked`,
+                                e.target.checked
+                              );
+                            }}
                           />
                           <label
                             className="form-check-label ms-2"
