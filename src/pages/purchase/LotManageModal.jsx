@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button, Modal, Table } from "react-bootstrap";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { lotData } from "./utils/lotData";
 
 const LotManageModal = ({ modal, setModal, toggle }) => {
@@ -11,11 +11,29 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
     control,
     formState: { errors },
     setValue,
+    watch,
   } = methods;
 
   const lotDropdown = lotData.filter(
     (lot) => lot.product === modal?.selectedProduct?.value
   );
+
+  const watchSelectedLots = watch(
+    `selectedProduct[${modal?.productIndex}].selectedLots`,
+    []
+  );
+  const { append: lotAppend, remove: lotRemove } = useFieldArray({
+    name: `selectedProduct[${modal?.productIndex}].selectedLots`,
+    control,
+  });
+
+  const handleSelectedLot = (e, lot) => {
+    if (e.target.checked) {
+      lotAppend(lot.value);
+    } else {
+      lotRemove(lot.value);
+    }
+  };
 
   return (
     <Modal
@@ -64,6 +82,7 @@ const LotManageModal = ({ modal, setModal, toggle }) => {
                             type="checkbox"
                             className="form-check-input"
                             onChange={(e) => {
+                              handleSelectedLot(e, lot);
                               setValue(
                                 `selectedProduct[${modal?.productIndex}].lotProducts[${lotIndex}].checked`,
                                 e.target.checked

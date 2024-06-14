@@ -24,6 +24,7 @@ const PurchasePage = () => {
   const schemaResolver = yup.object().shape({
     selectedProduct: yup.array().of(
       yup.object().shape({
+        selectedLots: yup.array(),
         units: yup
           .array()
           .of(
@@ -49,6 +50,24 @@ const PurchasePage = () => {
               return units.some((unit) => unit.checked === true);
             }
           ),
+        lotProducts: yup.array().of(
+          yup.object().shape({
+            lot: yup.string().required(),
+            checked: yup.boolean(),
+            units: yup.array().of(
+              yup.object().shape({
+                quantity: yup.number().when(["checked"], {
+                  is: true,
+                  then: (schema) =>
+                    schema
+                      .required("Quantity is required.")
+                      .min(1, "Quantity must be at least 1."),
+                  otherwise: (schema) => schema.notRequired(),
+                }),
+              })
+            ),
+          })
+        ),
       })
     ),
   });
